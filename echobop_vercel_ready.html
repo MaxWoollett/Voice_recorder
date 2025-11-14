@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EchoBop - Free Voice Recorder</title>
+<style>
+body {
+  margin:0;
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #0EA5E9, #22C55E);
+  color: #F3F4F6;
+  overflow-x:hidden;
+}
+.hero {
+  position: relative;
+  text-align: center;
+  padding: 80px 20px;
+  overflow: hidden;
+}
+.hero h1 {
+  font-size: 48px;
+  color: #ffffff;
+  text-shadow: 2px 2px #10B981;
+  position: relative;
+  z-index: 2;
+}
+.hero p {
+  font-size: 18px;
+  margin-top: 10px;
+  position: relative;
+  z-index: 2;
+}
+.hero img.background-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  max-width: 800px;
+  opacity: 0.2;
+  transform: translate(-50%, -50%);
+  z-index:1;
+}
+.globe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle at center, rgba(59,130,246,0.3), rgba(16,185,129,0.2));
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: rotate 60s linear infinite;
+  z-index: 1;
+}
+@keyframes rotate {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.btn-primary {
+  padding: 12px 24px;
+  background:#3B82F6;
+  color:#ffffff;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+  border:none;
+  margin-top:20px;
+}
+.btn-primary:hover { background:#22C55E; transform: scale(1.05); }
+.recorder-section {
+  margin:40px auto;
+  max-width:600px;
+  text-align:center;
+  background: rgba(255,255,255,0.05);
+  padding:20px;
+  border-radius:15px;
+  backdrop-filter: blur(8px);
+  position:relative;
+  overflow:hidden;
+}
+.waveform {
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:0;
+}
+.wavebar {
+  position:absolute;
+  bottom:0;
+  width:3px;
+  height:50%;
+  background:rgba(255,255,255,0.3);
+  animation: wave 1s infinite;
+}
+@keyframes wave {
+  0%,100%{transform:scaleY(0.5);} 50%{transform:scaleY(1);} 
+}
+select, button { padding:8px; border-radius:6px; border:1px solid #ccc; font-size:14px; margin-right:5px; transition: transform 0.2s ease, background 0.2s ease; }
+button:hover { transform: scale(1.05); }
+button:active { transform: scale(0.95); }
+button { cursor:pointer; border:none; color:white; }
+.btn-start { background:#10b981; } .btn-stop { background:#ef4444; } .btn-pause { background:#f59e0b; } .btn-resume { background:#3b82f6; } .btn-download { background:#8b5cf6; }
+.flex { display:flex; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:5px; justify-content:center; }
+.progress { width:100%; background:#e5e7eb; height:6px; border-radius:3px; margin-top:5px; z-index:1; position:relative; }
+.progress-bar { height:100%; background: linear-gradient(to right, #4ade80, #3b82f6); width:0%; }
+audio { width:100%; margin-top:10px; z-index:1; position:relative; }
+.small { font-size:12px; color:#6b7280; margin-top:5px; z-index:1; position:relative; }
+.features { display:flex; justify-content:space-around; flex-wrap:wrap; margin:60px 20px; }
+.feature-card { background: rgba(255,255,255,0.1); border-radius:15px; padding:20px; margin:10px; flex:1 1 200px; text-align:center; backdrop-filter: blur(8px); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.feature-card img { width:80px; border-radius:12px; margin-bottom:10px; }
+.feature-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+footer { text-align:center; padding:20px; font-size:14px; background: rgba(0,0,0,0.2); margin-top:40px; }
+a { color:#F3F4F6; text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="globe"></div>
+  <img class="background-img" src="https://images.unsplash.com/photo-1593642532973-d31b6557fa68?auto=format&fit=crop&w=800&q=80" alt="Person speaking into microphone">
+  <h1>EchoBop</h1>
+  <p>Record high-quality audio for your videos online.</p>
+  <button class="btn-primary" onclick="document.getElementById('recorder').scrollIntoView({behavior:'smooth'})">Get Started</button>
+</div>
+
+<div class="recorder-section" id="recorder">
+  <div class="waveform" id="waveform"></div>
+  <div class="flex">
+    <label>Microphone: </label>
+    <select id="micSelect"></select>
+  </div>
+  <div class="flex">
+    <button id="startBtn" class="btn-start">Start</button>
+    <button id="pauseBtn" class="btn-pause" disabled>Pause</button>
+    <button id="resumeBtn" class="btn-resume" disabled>Resume</button>
+    <button id="stopBtn" class="btn-stop" disabled>Stop</button>
+  </div>
+  <div class="flex">
+    <span class="small">Status: <span id="status">Ready</span></span>
+    <span class="small" style="margin-left:auto;">Duration: <span id="timer">0:00</span></span>
+  </div>
+  <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
+  <audio id="audioPlayback" controls></audio>
+  <div class="flex">
+    <a id="downloadBtn" class="btn-download" style="display:none; padding:6px 12px; border-radius:6px;">Download</a>
+  </div>
+</div>
+
+<div class="features">
+  <div class="feature-card">
+    <img src="https://images.unsplash.com/photo-1581091870627-6f2f7d5077a3?auto=format&fit=crop&w=80&q=80" alt="Microphone icon">
+    <h3>High Quality</h3>
+    <p>Record WAV or WebM for crystal-clear audio.</p>
+  </div>
+  <div class="feature-card">
+    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=80&q=80" alt="Person speaking">
+    <h3>Easy to Use</h3>
+    <p>Start recording with one click — no downloads required.</p>
+  </div>
+  <div class="feature-card">
+    <img src="https://images.unsplash.com/photo-1605902711622-cfb43c44312a?auto=format&fit=crop&w=80&q=80" alt="Soundwave icon">
+    <h3>Free Forever</h3>
+    <p>Use EchoBop online without any cost.</p>
+  </div>
+</div>
+
+<footer>
+  <p>Contact: <a href="mailto:maxwoollett@icloud.com">maxwoollett@icloud.com</a></p>
+  <p>&copy; 2025 EchoBop | Free Voice Recorder</p>
+</footer>
+
+<script>
+let mediaRecorder, chunks = [], stream, startTime, timerInterval;
+const status = document.getElementById('status');
+const timerEl = document.getElementById('timer');
+const progressBar = document.getElementById('progressBar');
+const audioPlayback = document.getElementById('audioPlayback');
+const downloadBtn = document.getElementById('downloadBtn');
+const micSelect = document.getElementById('micSelect');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resumeBtn = document.getElementById('resumeBtn');
+const waveform = document.getElementById('waveform');
+
+async function initMics(){
+  try{
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const mics = devices.filter(d=>d.kind==='audioinput');
+    micSelect.innerHTML = '';
+    mics.forEach(mic=>{
+      const opt = document.createElement('option'); opt.value=mic.deviceId; opt.text=mic.label || 'Microphone';
+      micSelect.appendChild(opt);
+    });
+  }catch(e){console.error(e);}
+}
+
+function updateTimer(){
+  const elapsed = Math.floor((Date.now()-startTime)/1000);
+  const minutes = Math.floor(elapsed/60);
+  const seconds = elapsed%60;
+  timerEl.textContent = `${minutes}:${seconds.toString().padStart(2,'0')}`;
+  progressBar.style.width = Math.min(100, elapsed/60*100)+'%';
+}
+
+function animateWaveform(){
+  waveform.innerHTML='';
+  for(let i=0;i<60;i++){
+    const bar = document.createElement('div');
+    bar.className='wavebar';
+    bar.style.left = `${i*1.5}%`;
+    bar.style.animationDelay = `${Math.random()}s`;
+    waveform.appendChild(bar);
+  }
+}
+
+startBtn.onclick = async ()=>{
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  stream = await navigator.mediaDevices.getUserMedia({audio:{deviceId: micSelect.value}});
+  chunks = [];
+  mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.ondataavailable = e=>{if(e.data.size>0) chunks.push(e.data);};
+  mediaRecorder.onstop = ()=>{
+    const blob = new Blob(chunks, {type:'audio/wav'});
+    audioPlayback.src = URL.createObjectURL(blob);
+    downloadBtn.href = audioPlayback.src;
+    downloadBtn.download = `EchoBop_${Date.now()}.wav`;
+    downloadBtn.style.display='inline-block';
+  };
+  mediaRecorder.start();
+  startTime = Date.now();
+  timerInterval = setInterval(updateTimer,1000);
+  status.textContent='Recording';
+  startBtn.disabled=true; stopBtn.disabled=false; pauseBtn.disabled=false;
+  animateWaveform();
+}
+
+pauseBtn.onclick = ()=>{
+  mediaRecorder.pause();
+  clearInterval(timerInterval);
+  status.textContent='Paused';
+  pauseBtn.disabled=true; resumeBtn.disabled=false;
+}
+
+resumeBtn.onclick = ()=>{
+  mediaRecorder.resume();
+  startTime = Date.now() - parseInt(timerEl.textContent.split(':')[0])*60*1000 - parseInt(timerEl.textContent.split(':')[1])*1000;
+  timerInterval = setInterval(updateTimer,1000);
+  status.textContent='Recording';
+  resumeBtn.disabled=true; pauseBtn.disabled=false;
+}
+
+stopBtn.onclick = ()=>{
+  mediaRecorder.stop();
+  stream.getTracks().forEach(t=>t.stop());
+  clearInterval(timerInterval);
+  status.textContent='Stopped';
+  timerEl.textContent='0:00';
+  progressBar.style.width='0%';
+  startBtn.disabled=false; stopBtn.disabled=true; pauseBtn.disabled=true; resumeBtn.disabled=true;
+  waveform.innerHTML='';
+}
+
+initMics();
+</script>
+
+</body>
+</html>
